@@ -1,0 +1,9 @@
+{
+  "framework": null,
+  "functions": {
+    "api/admin.js": { "includeFiles": "overview.sql", "maxDuration": 10 }
+  },
+  "rewrites": [
+    { "source": "/", "destination": "/api/admin" }
+  ]
+}
