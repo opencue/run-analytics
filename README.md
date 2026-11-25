@@ -1,9 +1,9 @@
 # OpenCue run analytics
 
-Public client and dashboard queries for aggregate GitGuardex and Cue run
-statistics. [PostHog](https://github.com/PostHog/posthog) supplies the
-collection, storage, login, and dashboard; this repository contains no
-instance credentials, real run data, or alternate analytics server.
+Public opt-in client and private admin dashboard for aggregate GitGuardex and
+Cue run statistics. [PostHog](https://github.com/PostHog/posthog) supplies
+collection and storage separately from the Vercel dashboard. This repository
+contains no instance credentials or real run data.
 
 ## Data contract
 
@@ -29,18 +29,21 @@ statistics are advisory, not trustworthy for billing or authorization.
    before exposing it publicly. Put it behind HTTPS. Restrict account signup
    and use an invite-only project. Apply rate and body-size limits to the
    public capture route, and set a retention policy for raw events and backups.
-2. Bind `analytics.webu.hu` at the deployment and configure its DNS. Verify
-   TLS and that anonymous dashboard access is denied. Do not publish or embed
-   a public dashboard link.
-3. In the private project, save [`overview.sql`](overview.sql) as a SQL insight
-   and pin it to a dashboard. It shows 30-day run counts, failures, success
-   rate, p50/p95 durations, and reported token totals with their coverage.
-   Missing token metrics do not mean zero usage.
+2. Deploy this repository to Vercel with a random secret of at least 24
+   characters in the production `RUN_ANALYTICS_ADMIN_PASSWORD` environment
+   variable. Bind `analytics.webu.hu` to the deployment, verify TLS, and confirm
+   anonymous requests receive 401. The username is `admin`.
+3. On Vercel only, configure `POSTHOG_ORIGIN` (the separate PostHog HTTPS
+   origin), `POSTHOG_PROJECT_ID` and `POSTHOG_QUERY_KEY` (a project-scoped
+   read-only key authorized to run queries), then redeploy. The dashboard uses
+   [`overview.sql`](overview.sql) for 30-day run and failure counts, success rate,
+   p50/p95 durations, and reported token totals with coverage. Missing token
+   measurements are not zero usage. The dashboard is not a capture endpoint.
 
 ## Test the sender
 
 ```sh
-node --test client.test.cjs
+node --test client.test.cjs admin.test.cjs
 ```
 
 For a configured test or production project, set the following in the invoking
@@ -48,7 +51,7 @@ user's environment. There is no default host or project key in the client. Do
 not set or persist these values for users who have not opted in.
 
 ```sh
-export OPENCUE_RUN_ANALYTICS_HOST=https://analytics.webu.hu
+export OPENCUE_RUN_ANALYTICS_HOST=https://posthog.example.org
 export OPENCUE_RUN_ANALYTICS_PROJECT_KEY=phc_your_project_capture_key
 export OPENCUE_RUN_ANALYTICS=1
 ```
